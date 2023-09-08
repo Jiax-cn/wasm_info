@@ -1,0 +1,13 @@
+[package]
+name = "wasm_info"
+rust-version = "1.70.0"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+wasmparser = { version = "0.112.0", default-features = false }
+anyhow = { version = "1.0.75" }
+
+[features]
+default = ["std"]
+std = []
