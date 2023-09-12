@@ -1,32 +1,48 @@
 use std::{
-    env,
 	fs::read,
-	path::Path,
+    path::PathBuf,
 };
 
 use wasm_info::{
-    common::Module,
-    custom::get_name_map,
+    custom::parse_name_sec,
 };
 
+use clap::{Parser,Subcommand,CommandFactory};
+
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// parse wasm functions' names.
+    Parse{
+        /// wasm file with name section.
+        input: PathBuf,
+    },
+}
+
 fn main(){
-    let args = env::args().collect::<Vec<_>>();
-	if args.len() != 2 {
-		println!("Usage: {} input.wasm", args[0]);
-		return;
-	}
+    let args = Args::parse();
 
-    let path = Path::new(&args[1]);
-    let bytes = read(path).unwrap();
+    match args.command {
+        Some(Commands::Parse{input}) => {
+            let bytes = read(input).unwrap();
 
-    // Loading module
-    let module = Module::new(bytes.as_ref()).unwrap();
-
-    if let Some(name_map) = get_name_map(&module){
-        for naming in name_map.into_iter() {
-            let naming = naming.unwrap();
-            println!("{} {}", naming.index, naming.name);
-        }
+            if let Some(name_map) = parse_name_sec(&bytes){
+                for naming in name_map.into_iter() {
+                    let naming = naming.unwrap();
+                    println!("{} {}", naming.index, naming.name);
+                }
+            }
+        },
+        None => {
+            let _ = Args::command().print_long_help();
+        },
     }
+
     return;
 }
